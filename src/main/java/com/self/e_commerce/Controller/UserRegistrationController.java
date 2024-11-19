@@ -1,18 +1,22 @@
 package com.self.e_commerce.Controller;
 
+import com.self.e_commerce.Entity.Role;
 import com.self.e_commerce.Entity.UserInfo;
 import com.self.e_commerce.Exception.ResourceNotFoundException;
+import com.self.e_commerce.Repository.RoleInfoRepo;
 import com.self.e_commerce.Repository.UserInfoRepo;
 import com.self.e_commerce.Service.UserInfoService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.support.DefaultMessageSourceResolvable;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.validation.BindingResult;
 import org.springframework.web.bind.annotation.*;
 
 import javax.validation.Valid;
 import java.util.Map;
 import java.util.Optional;
+import java.util.Set;
 import java.util.stream.Collectors;
 
 @RestController
@@ -22,9 +26,11 @@ public class UserRegistrationController {
     private UserInfoRepo userInfoRepo;
     @Autowired
     private UserInfoService userInfoService;
+    @Autowired
+    private RoleInfoRepo roleInfoRepo;
+    private BCryptPasswordEncoder passwordEncoder = new BCryptPasswordEncoder(12);
 
-
-    @PostMapping("/registration")
+    @PostMapping("/register")
     public ResponseEntity<String> UserRegistration(@Valid @RequestBody UserInfo userInfo, BindingResult result) throws Exception{
         System.out.println("Received updates: " + userInfo);
         if(result.hasErrors()){
@@ -34,11 +40,16 @@ public class UserRegistrationController {
                     .collect(Collectors.joining(", "));
             return ResponseEntity.badRequest().body(errorMessage);
         }
+        userInfo.setPassword_hash(passwordEncoder.encode(userInfo.getPassword_hash()));
+        // Set default role
+        Role userRole = roleInfoRepo.findByName("ROLE_USER")
+                .orElseThrow(() -> new RuntimeException("Role not found"));
+        userInfo.setRoles(Set.of(userRole));
 
         UserInfo save = userInfoRepo.save(userInfo);
         return ResponseEntity.ok("User Registered Succesfully");
     }
-    @PatchMapping("/updateProfileData/{id}")
+    @PatchMapping("/updateProfileDataById/{id}")
     public ResponseEntity<String> updateUserDetails(@PathVariable int id,@RequestBody Map<String,Object> updates ) throws Exception{
 
         UserInfo byId;
@@ -92,7 +103,7 @@ public class UserRegistrationController {
         userInfoRepo.save(byId);
         return ResponseEntity.ok("Data updated");
     }
-    @PatchMapping("/updateProfileData/{username}")
+    @PatchMapping("/updateProfileDataByUsername/{username}")
     public ResponseEntity<String> updateUserDetailsByUsername(@PathVariable String username, @RequestBody Map<String,Object> updates) throws Exception{
 
         UserInfo user = userInfoService.findUserIdByUsername(username);

@@ -11,6 +11,8 @@ import org.hibernate.annotations.CreationTimestamp;
 import javax.validation.constraints.Email;
 import javax.validation.constraints.NotNull;
 import java.time.LocalDateTime;
+import java.util.HashSet;
+import java.util.Set;
 
 @NoArgsConstructor
 @AllArgsConstructor
@@ -50,4 +52,14 @@ public class UserInfo {
                 ", created_at=" + created_at +
                 '}';
     }
+
+    @ManyToMany(fetch = FetchType.EAGER)
+    @JoinTable(
+            name = "user_roles",
+            joinColumns = @JoinColumn(name = "user_id"),
+            inverseJoinColumns = @JoinColumn(name = "role_id")
+    )
+    @Getter@Setter
+    private Set<Role> roles = new HashSet<>();
+
 }
