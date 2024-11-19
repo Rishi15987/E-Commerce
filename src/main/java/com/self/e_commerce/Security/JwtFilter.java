@@ -22,6 +22,12 @@ public class JwtFilter extends OncePerRequestFilter {
     private JWTService jwtService;
     @Autowired
     ApplicationContext context;
+
+    @Override
+    protected boolean shouldNotFilter(HttpServletRequest request) {
+        String path = request.getRequestURI();
+        return path.equals("/user/register") || path.equals("/user/login");
+    }
     @Override
     protected void doFilterInternal(HttpServletRequest request, HttpServletResponse response, FilterChain filterChain) throws ServletException, IOException {
         String authHeader = request.getHeader("Authorization");

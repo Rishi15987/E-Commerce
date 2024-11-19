@@ -16,7 +16,7 @@ public class UserLoginController {
     @Autowired
     private UserInfoService userInfoService;
 
-    @GetMapping("/login")
+    @PostMapping("/login")
     public String userLogin(@Valid @RequestBody UserInfo userInfo) throws Exception{
         return userInfoService.verify(userInfo);
     }
