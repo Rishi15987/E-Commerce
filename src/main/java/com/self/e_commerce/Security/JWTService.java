@@ -1,5 +1,6 @@
 package com.self.e_commerce.Security;
 
+import com.self.e_commerce.Entity.UserInfo;
 import io.jsonwebtoken.Claims;
 import io.jsonwebtoken.Jwts;
 import io.jsonwebtoken.io.Decoders;
@@ -30,12 +31,14 @@ public class JWTService {
         }
 
     }
-    public String generateToken(String username) {
+    public String generateToken(UserInfo user) {
         Map<String,Object> claims = new HashMap<>();
+        claims.put("userId", user.getUser_id());
+        claims.put("username", user.getUsername());
         return Jwts.builder()
                 .claims()
                 .add(claims)
-                .subject(username)
+                .subject(user.getUsername())
                 .issuedAt(new Date(System.currentTimeMillis()))
                 .expiration(new Date(System.currentTimeMillis()+60*60*1000))
                 .and()
@@ -57,7 +60,9 @@ public class JWTService {
         final Claims claims = extractAllClaims(token);
         return claimResolver.apply(claims);
     }
-
+    public String extractUserId(String token) {
+        return extractClaim(token, claims -> claims.get("userId", String.class));
+    }
     private Claims extractAllClaims(String token) {
         return Jwts.parser()
                 .verifyWith(getKey())

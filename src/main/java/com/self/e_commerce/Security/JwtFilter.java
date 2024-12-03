@@ -12,6 +12,7 @@ import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.web.authentication.WebAuthenticationDetailsSource;
 import org.springframework.stereotype.Component;
+import org.springframework.util.StringUtils;
 import org.springframework.web.filter.OncePerRequestFilter;
 
 import java.io.IOException;
@@ -23,6 +24,9 @@ public class JwtFilter extends OncePerRequestFilter {
     @Autowired
     ApplicationContext context;
 
+    @Autowired
+    private MyUserDetailsService myUserDetailsService;
+
     @Override
     protected boolean shouldNotFilter(HttpServletRequest request) {
         String path = request.getRequestURI();
@@ -33,6 +37,7 @@ public class JwtFilter extends OncePerRequestFilter {
         String authHeader = request.getHeader("Authorization");
         String token = "";
         String username = "";
+        UserDetails userDetails = myUserDetailsService.loadUserByUsername(username);
 
         if(authHeader!=null && authHeader.startsWith("Bearer ")){
             token = authHeader.substring(7);
@@ -40,9 +45,18 @@ public class JwtFilter extends OncePerRequestFilter {
             System.out.println("Extracted token: " + token);
             System.out.println("Extracted username: " + username);
         }
+        if(StringUtils.hasText(token) && jwtService.validateToken(token,userDetails)){
+            String userId = jwtService.extractUserId(token);
+            String requestedUserId = request.getParameter("userId");
 
+            if (requestedUserId != null && !userId.equals(requestedUserId)) {
+                response.sendError(HttpServletResponse.SC_FORBIDDEN, "Unauthorized access");
+                return;
+            }
+        }
         if(username!= null && SecurityContextHolder.getContext().getAuthentication() == null){
-            UserDetails userDetails = context.getBean(MyUserDetailsService.class).loadUserByUsername(username);
+//            UserDetails userDetails = context.getBean(MyUserDetailsService.class).loadUserByUsername(username);
+
             if(jwtService.validateToken(token,userDetails)){
                 UsernamePasswordAuthenticationToken authToken = new UsernamePasswordAuthenticationToken(userDetails,null,userDetails.getAuthorities());
                 authToken.setDetails(new WebAuthenticationDetailsSource().buildDetails(request));

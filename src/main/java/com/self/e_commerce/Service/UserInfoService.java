@@ -32,7 +32,7 @@ public class UserInfoService {
                             userInfo.getPassword_hash()));
             System.out.println(userInfo+"2");
             if (authentication.isAuthenticated()) {
-                return jwtService.generateToken(userInfo.getUsername());
+                return jwtService.generateToken(userInfo);
             } else {
                 throw new BadCredentialsException("Authentication failed");
             }
